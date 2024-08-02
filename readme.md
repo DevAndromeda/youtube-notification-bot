@@ -1,8 +1,8 @@
-# Discord YouTube Notification Bot
+Absolutely! Here's the updated README with the changes incorporated:
 
-First, delete package.json if its still popping up, and do "npm init" and initialise a normal package.json
+## Discord YouTube Notification Bot
 
-This bot checks your YouTube channel every 15 seconds for new uploads or live streams and sends a notification to a specified Discord channel. It uses the YouTube Data API and the `discord.js` library.
+First, delete `package.json` if it exists, and run `npm init` to create a basic one. This bot checks your configured YouTube channels every **15 seconds** for new uploads or live streams and sends notifications to the corresponding Discord channels. It utilizes the YouTube Data API and the `discord.js` library.
 
 ## Table of Contents
 
@@ -14,23 +14,31 @@ This bot checks your YouTube channel every 15 seconds for new uploads or live st
 
 ## Installation
 
-1. **Clone the Repository:**
+1. **Clone the Repository (if applicable):**
 
    ```bash
    git clone https://github.com/your-username/discord-youtube-notification-bot.git
    cd discord-youtube-notification-bot
    ```
 
-2. **Install Required Packages:**
+2. **Initialize `package.json`:**
+
+   ```bash
+   npm init -y
+   ```
+
+   This creates a basic `package.json` file for your project.
+
+3. **Install Required Packages:**
 
    ```bash
    npm install discord.js axios
    ```
 
-3. **Get YouTube Data API Key:**
+4. **Get YouTube Data API Key:**
 
    - Go to the [Google Cloud Console](https://console.cloud.google.com/).
-   - Create a new project.
+   - Create a new project (if needed).
    - Enable the YouTube Data API v3 for your project.
    - Create an API key.
 
@@ -43,20 +51,29 @@ This bot checks your YouTube channel every 15 seconds for new uploads or live st
    ```javascript
    module.exports = {
      token: "YOUR_DISCORD_BOT_TOKEN",
-     channel: "YOUR_DISCORD_CHANNEL_ID",
-     messageTemplate:
-       "Hello everyone, **{author}** just now uploaded a video **{title}**!\n{url}",
-     channel_id: "YOUR_YOUTUBE_CHANNEL_ID",
-     watchInterval: 15000,
+     channel_id: [
+       {
+         channel: "YOUR_DISCORD_CHANNEL_ID_1",
+         youtube_channel_id: "YOUR_YOUTUBE_CHANNEL_ID_1",
+         // optional: messageTemplate: "Custom template for channel 1"
+       },
+       {
+         channel: "YOUR_DISCORD_CHANNEL_ID_2",
+         youtube_channel_id: "YOUR_YOUTUBE_CHANNEL_ID_2",
+       },
+       // ... add more channel configurations
+     ],
+     watchInterval: 15000, // 15 seconds in milliseconds
      youtubeApiKey: "YOUR_YOUTUBE_API_KEY",
    };
    ```
 
-   - `token`: Your Discord bot token. You can get this from the [Discord Developer Portal](https://discord.com/developers/applications).
-   - `channel`: The ID of the Discord channel where you want to send notifications.
-   - `messageTemplate`: The template for the notification message. `{author}` will be replaced with the channel name, `{title}` with the video title, and `{url}` with the video URL.
-   - `channel_id`: The ID of your YouTube channel.
-   - `watchInterval`: The interval (in milliseconds) at which the bot checks for new uploads (15000ms = 15 seconds).
+   - `token`: Your Discord bot token (from Developer Portal).
+   - `channel_id`: An array of objects containing configuration for each monitored channel.
+     - `channel`: ID of the Discord channel for notifications.
+     - `youtube_channel_id`: ID of the YouTube channel to monitor.
+     - `messageTemplate` (optional): Custom message template for this channel.
+   - `watchInterval`: The interval (in milliseconds) for checking new uploads (default: 15 seconds).
    - `youtubeApiKey`: Your YouTube Data API key.
 
 ## Running the Bot
@@ -75,34 +92,31 @@ This bot checks your YouTube channel every 15 seconds for new uploads or live st
 
 2. **Bot Operation:**
 
-   - The bot will check for new uploads on your YouTube channel every 15 seconds.
-   - If a new video is found, it will send a notification to the specified Discord channel.
+   - The bot checks for new uploads on your configured YouTube channels every 15 seconds.
+   - If a new video is found for any channel, it sends a notification to the corresponding Discord channel with a customized message template (if provided).
 
 ## Code Explanation
 
 ### `config.js`
 
-This file contains the configuration for your bot, including your Discord bot token, Discord channel ID, message template, YouTube channel ID, watch interval, and YouTube API key.
+This file houses the configuration for your bot, including Discord bot token, channel configurations (with Discord and YouTube channel IDs, optional custom message templates), watch interval, and YouTube API key.
 
 ### `index.js`
 
-This is the main bot file. It does the following:
+This is the main file for the bot. It performs the following:
 
 - Initializes the Discord client.
-- Fetches the latest video from the YouTube channel using the YouTube Data API.
-- Compares the fetched video ID with the last fetched video ID to detect new uploads.
-- Sends a notification to the specified Discord channel if a new video is found.
+- Iterates through each channel configuration in `config.js`.
+  - For each channel, fetches the latest video from the YouTube channel using the YouTube Data API.
+  - Compares the fetched video ID with the last fetched video ID stored separately for each channel (using a unique key).
+  - Sends a notification to the specified Discord channel if a new video is found, using the corresponding message template (if provided).
 
 ### Key Functions:
 
-- `checkYouTube()`: Fetches the latest video from the YouTube channel and sends a notification if a new video is found.
-- `client.once('ready', ...)`: Runs when the bot is ready. Starts the initial check and sets up an interval to check for new videos every 15 seconds.
+- `checkYouTube(config)`: Fetches the latest video from YouTube channels, compares IDs, and sends notifications if needed.
+- `client.once('ready', ...)`: Runs when the bot is ready. Starts the initial check and sets up an interval for periodic checks.
 
 ## Dependencies
 
 - **discord.js**: Library to interact with the Discord API.
-- **axios**: Library to make HTTP requests to the YouTube Data API.
-
----
-
-This README provides a comprehensive guide to setting up and running your Discord YouTube notification bot. If you have any questions or run into issues, feel free to ask!
+- \*\*

@@ -6,22 +6,28 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
 });
 
-let lastVideoId = null;
+// Object to store last video IDs for each channel (avoiding global variable)
+const lastVideoIds = {};
 
 async function checkYouTube() {
   try {
-    for (const channelId of config.channel_id) {
+    for (const channelConfig of config.channel_id) {
+      const { channel, youtube_channel_id } = channelConfig;
+      const lastVideoIdKey = `lastVideoId_${youtube_channel_id}`;
+
       const response = await axios.get(
-        `https://www.googleapis.com/youtube/v3/search?key=${config.youtubeApiKey}&channelId=${channelId}&part=snippet,id&order=date&maxResults=1`
+        `https://www.googleapis.com/youtube/v3/search?key=${config.youtubeApiKey}&channelId=${youtube_channel_id}&part=snippet,id&order=date&maxResults=1`
       );
 
       const video = response.data.items[0];
 
-      console.log(`Checking for new video on channel ${channelId}:`, video);
+      if (
+        !lastVideoIds[lastVideoIdKey] ||
+        video.id.videoId !== lastVideoIds[lastVideoIdKey]
+      ) {
+        lastVideoIds[lastVideoIdKey] = video.id.videoId; // Store last video ID for each channel
 
-      if (video.id.videoId !== lastVideoId) {
-        lastVideoId = video.id.videoId;
-        const channel = await client.channels.fetch(channelId);
+        const discordChannel = await client.channels.fetch(channel);
         const message = config.messageTemplate
           .replace("{author}", video.snippet.channelTitle)
           .replace("{title}", video.snippet.title)
@@ -29,7 +35,7 @@ async function checkYouTube() {
             "{url}",
             `https://www.youtube.com/watch?v=${video.id.videoId}`
           );
-        channel.send(message);
+        discordChannel.send(message);
       }
     }
   } catch (error) {

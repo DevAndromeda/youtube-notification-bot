@@ -4,26 +4,12 @@
   "description": "Simple and easy to use discord bot to notify members whenever a video is posted on a YouTube channel.",
   "main": "index.js",
   "scripts": {
-    "test": "node index.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Snowflake107/youtube-notification-bot.git"
-  },
-  "keywords": [
-    "youtube",
-    "discord.js",
-    "notification-bot"
-  ],
-  "author": "Snowflake07",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/Snowflake07/youtube-notification-bot/issues"
-  },
-  "homepage": "https://github.com/Snowflake07/youtube-notification-bot#readme",
+  "author": "",
+  "license": "ISC",
   "dependencies": {
-    "discord.js": "^12.0.2",
-    "quick.db": "^7.0.0-b22",
-    "rss-parser": "^3.7.5"
+    "axios": "^1.7.3",
+    "discord.js": "^14.15.3"
   }
 }

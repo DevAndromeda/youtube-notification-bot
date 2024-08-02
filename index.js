@@ -1,34 +1,52 @@
-const Discord = require("discord.js");
-const client = new Discord.Client();
-client.db = require("quick.db");
-client.request = new (require("rss-parser"))();
-client.config = require("./config.js");
+const { Client, GatewayIntentBits } = require("discord.js");
+const axios = require("axios");
+const config = require("./config");
 
-client.on("ready", () => {
-    console.log("I'm ready!");
-    handleUploads();
+const client = new Client({
+  intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
 });
 
-function handleUploads() {
-    if (client.db.fetch(`postedVideos`) === null) client.db.set(`postedVideos`, []);
-    setInterval(() => {
-        client.request.parseURL(`https://www.youtube.com/feeds/videos.xml?channel_id=${client.config.channel_id}`)
-        .then(data => {
-            if (client.db.fetch(`postedVideos`).includes(data.items[0].link)) return;
-            else {
-                client.db.set(`videoData`, data.items[0]);
-                client.db.push("postedVideos", data.items[0].link);
-                let parsed = client.db.fetch(`videoData`);
-                let channel = client.channels.cache.get(client.config.channel);
-                if (!channel) return;
-                let message = client.config.messageTemplate
-                    .replace(/{author}/g, parsed.author)
-                    .replace(/{title}/g, Discord.Util.escapeMarkdown(parsed.title))
-                    .replace(/{url}/g, parsed.link);
-                channel.send(message);
-            }
-        });
-    }, client.config.watchInterval);
+// Object to store last video IDs for each channel (avoiding global variable)
+const lastVideoIds = {};
+
+async function checkYouTube() {
+  try {
+    for (const channelConfig of config.channel_id) {
+      const { channel, youtube_channel_id } = channelConfig;
+      const lastVideoIdKey = `lastVideoId_${youtube_channel_id}`;
+
+      const response = await axios.get(
+        `https://www.googleapis.com/youtube/v3/search?key=${config.youtubeApiKey}&channelId=${youtube_channel_id}&part=snippet,id&order=date&maxResults=1`
+      );
+
+      const video = response.data.items[0];
+
+      if (
+        !lastVideoIds[lastVideoIdKey] ||
+        video.id.videoId !== lastVideoIds[lastVideoIdKey]
+      ) {
+        lastVideoIds[lastVideoIdKey] = video.id.videoId; // Store last video ID for each channel
+
+        const discordChannel = await client.channels.fetch(channel);
+        const message = config.messageTemplate
+          .replace("{author}", video.snippet.channelTitle)
+          .replace("{title}", video.snippet.title)
+          .replace(
+            "{url}",
+            `https://www.youtube.com/watch?v=${video.id.videoId}`
+          );
+        discordChannel.send(message);
+      }
+    }
+  } catch (error) {
+    console.error("Error fetching YouTube data:", error);
+  }
 }
 
-client.login(client.config.token);
+client.once("ready", () => {
+  console.log("Bot is online!");
+  checkYouTube();
+  setInterval(checkYouTube, config.watchInterval);
+});
+
+client.login(config.token);
